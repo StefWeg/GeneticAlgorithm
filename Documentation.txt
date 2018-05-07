@@ -1,0 +1,479 @@
+
+OGîLNA CHARAKTERYSTYKA PROGRAMU:
+Program 'Genetic Algorythm' realizuje klasyczny algorytm geneteyczny w celu znalezienia maksimum/minimum funkcji kwadratowej
+o zadanych parametrach. Program posiada interface graficzny, kt—ry pozwala dokona konfiguracji funkcji i algorytmu oraz
+prezentuje wykres funkcji i post«py poszukiwaÄ.
+
+
+PODSTAWOWE ELEMENTY ALGORYTMU GENETYCZNEGO:
+- osobnik: argument o okreælonej wartoæci
+- populacja: okreælona iloæ osobnik—w tworzˆca generacj«
+- chromosom: zakodowana cecha osobnika
+- genom: zbi—r cech osobnika zakodowanych w chromosomach - tutaj pojedyczny chromosom kodujˆcy argument stanowi ca¸y genom osobnika
+- fenotyp: cechy osobnika podlegajˆce ocenie - tutaj wartoæ funkcji kwadratowej dla danego argumentu
+- funkcja przystosowania: wykorzystywana do oceny fenotypu (jakoæci osobnika)
+
+- dob—r naturalny (selection): wyb—r osobnik—w najlepiej przystosowanych do populacji rodzicielskiej
+- krzyıowanie (crossover): wymiana fragment—w chromosom—w kojarzonych par z populacji rodzicielskiej
+							prowadzˆca do powstania nowych osobnik—w tworzˆcych populacj« potomk—w
+- mutacja: proces zmiany pojedynczych gen—w w chromosomach
+
+
+DZIAüANIE ALGORYTMU GENETYCZNEGO:
+Kod algorytmu genetycznego znajduje si« w pliku r—d¸owym "GeneticAlgorythmEngine.cpp" o pliku nag¸—wkowym "GeneticAlgorythmEngine.h".
+Tworzˆ go cztery podstawowe klasy:
+	- klasa 'Parameters' przechowujˆca parametry konfiguracyjne funkcji kwadratowej oraz algorytmu genetycznego
+	- klasa 'Population' przechowujˆca populacj« osobnik—w
+	- klasa 'GeneticAlgorythmToolbox' zawierajˆca mechanizmy algorytmu genetycznego i umoıliwiajˆca utworzenie nowej generacji
+	- klasa 'Chart' przechowujˆca wszystkie niezb«dne informacje do narysowania wykresu funkcji oraz wizualizacji poszukiwaÄ
+
+
+SCHEMAT FUNKCJONOWANIA ALGORYTMU GENETYCZNEGO:
+1. Inicjalizacja: wyb—r poczˆtkowej populacji
+2. Ocena przystosowania
+3. Selekcja
+4. Krzyıowanie
+5. Mutacja
+6. Utworzenie nowej populacji
+7. Powr—t do pkt. 2
+
+ad. 1 INICJALIZACJA
+Utworzenie populacji sk¸adajˆcej si« z okreælonej liczby osobnik—w: 10/20/50/100/200.
+
+Kaıdy z osobnik—w posiada genom, kt—ry sk¸ada si« z jednego chromosomu zakodowanego w formie 8-bitowego ciˆgu binarnego (binary8),
+10-binarnego ciˆgu binarnego (binary10) lub 4-cyfrowej liczby ca¸kowitej (integers). Poszczeg—lne bity ciˆgu binarnego lub cyfry
+liczby ca¸kowitej stanowiˆ geny.
+
+Informacja o wielkoæci populacji (populationSize) oraz metodzie kodowania (codingMethod) przechowywana jest w klasie 'Parameters'.
+Klasa ta przekazywana jest jako parametr do konstruktora klasy 'Population', kt—ry tworzy randomowˆ populacj« osobnik—w.
+Informacje na temat kaıdego osobnika (genome + wartoæ funkcji przystosowania) przechowywane sˆ w pomocniczej klasie 'Individual'.
+
+ad. 2 OCENA PRZYSTOSOWANIA
+Ocena przystosowania osobnik—w wiˆıe si« z przypisaniem kaıdemu z nich wartoæci funkcji przystosowania.
+Funkcja ta przyjmuje zawsze wartoæci nieujemne i im wyısza jest jej wartoæ tym lepsza ocena przystosowania
+i wi«ksze prawdopodobieÄstwo wyboru do puli rodzicielskiej biorˆcej udzia¸ w tworzeniu nowych osobnik—w podczas krzyıowania.
+
+Za ocen« przystosowania odpowiada wewn«trzna metoda 'assignFitnessFunctionValues' klasy 'GeneticAlgorythmToolbox'.
+Metoda ta, wykorzystujˆc informacje na temat wsp—¸czynnik—w funkcji kwadratowej (a/b/cFactor), obiektu poszukiwaÄ (target)
+oraz typu funkcji przystosowania (fitnessFunctionType), przypisuje kaıdemu osobnikowi wartoæci funkcji przystosowania.
+
+Obiektem poszukiwaÄ (target) moıe by: wartoæ maksymalna (maximum), wartoæ minimalna (minimum) lub ekstremum lokalne funkcji (ekstremum).
+
+W programie istniejˆ dwa typy funkcji przystosowania (fitnessFunctionType): funkcja liniowa (linear) dokonujˆca przesuni«cia
+wartoæci funkcji kwadratowej dla wszystkich argument—w o wartoæ zapewniajˆcˆ, ıe wszystkie wartoæci sˆ nieujemne oraz funkcj«
+wyk¸adniczˆ (exponential), kt—ra wykorzystuje wartoæci funkcji kwadratowej danych argument—w do utworzenia wyk¸adnik—w pot«gi liczby 2
+stanowiˆcej wartoæ funkcji przystosowania. Dodatkowo, kaıdy z tych rodzaj—w funkcji przystosowania, przy poszukiwaniu wartoæci
+minimalnej funkcji kwadratowej przeprowadza inwersj« wartoæci funkcji przystosowania, kt—ra zapewnia, ıe argumenty o najmniejszej wartoæci
+funkcji kwadratowej otrzymujˆ najwyıszˆ wartoæ funkcji przystosowania.
+
+ad. 3 SELEKCJA
+Wyb—r osobnik—w do puli rodzicielskiej odbywa si« w oparciu o obliczonˆ wczeæniej wartoæ funkcji przystosowania dla kaıdego z osobnik—w.
+Metody wyboru (selectionMethod) dzia¸ajˆ w spos—b dajˆcy najwi«ksze prawdopodobieÄstwo (lub nawet gwarancj« wyboru) osobnikom o
+najwi«kszej wartoæci funkcji przystosowania.
+
+W programie istniejˆ trzy metody selekcji (selectionMethod):
+- metoda ruletki (roulette):
+	- przydzielanie osobnikowi wycinku ko¸a o wielkoæci proporcjonalnej do stosunku jego wartoæci funkcji przystosowania i sumy
+		wartoæci funkcji przystosowania wszystkich osobnik—w populacji; udzia¸ wycinka ko¸a wyraıony procentowo
+		(im wi«kszy wycinek ko¸atym wi«ksze prawdopodobieÄstwo wybrania)
+	- realizacja praktyczna: kaıdemu osobnikowi przypisywany jest wycinek z zakresu np. <0;100> po czym losuje si« liczb« z tego zakresu
+		i sprawdza, do czyjego zakresu ona naleıy -> do populacji potomk—w wybiera si« trafionego osobnika (wykonuje si« tyle losowaÄ
+		ile by¸o osobnik—w w populacji rodzicielskiej)
+- metoda rankingowa (ranking):
+	- tworzenie rankingu osobnik—w szeregujˆcego osobniki wed¸ug wartoæci funkcji przystosowania: liczba kopii osobnika w puli 
+		rodzicielskiej zaleıy od wartoæci pewnej funkcji (~liniowej) zaleınej od pozycji w rankingu (rangi)
+	- realizacja praktyczna: tworzona jest lista 4 osobnik—w o najwyıszych (r—ınych!) wartoæciach funkcji przystosowania, kopie
+		pierwszego stanowiˆ 40% puli rodzicielskiej, kopie drugiego - 30%, kopie trzeciego - 20%, a kopie czwartego - 10%.
+		(uwaga: jeıeli nie ma 4 r—ınych najwyıszych funkcji przystosowania osobniki na liæcie si« powtarzajˆ)
+- metoda turniejowa (tournament):
+	- populacj« dzieli si« na podgrupy (2-3 osobniki) i w kaıdej grupie wybiera si« najlepszego osobnika, kt—ry przechodzi do
+		puli rodzicielskiej
+	- realizacja praktyczna: iloæ grup r—wna jest liczbie osobnik—w w populacji, grupy zawierajˆ trj—ki randomowo wybranych
+		z populacji osobnik—w
+
+Za przeprowadzenie selekcji odpowiada wewn«trzna metoda 'selectParents' klasy 'GeneticAlgorythmToolbox'.
+Metoda ta wykorzystuje informacje na temat metody kodowania (codingMethod), metody selekcji (selectionMethod) oraz modyfikacji
+selekcji (selectionModifications), by utworzy populacj« rodzicielskˆ o takiej samej liczebnoæci jak populacja pierwotna.
+
+Ponadto w programie moına wprowadzi modyfikacje selekcji (selectionModifications):
+- selekcja elitarna (eliteSelection): najlepszy osobnik zawsze wchodzi do nowej populacji (nie podlega krzyıowaniu ani mutacji)
+- cz«æciowa wymiana populacji (partialExchange): do nowej populacji wchodzi okreælona iloæ najlepszych osobnik—w starej populacji (40%)
+
+Za przeprowadzenie modyfikacji selekcji odpowiada wewn«trzna metoda 'applySelectionModification' klasy 'GeneticAlgorythmToolbox'.
+
+ad. 4 KRZYûOWANIE
+Krzyıowanie (crossover) polega na wymianie lub uærednieniu fragment—w genomu kojarzonych par. Osobniki grupowane sˆ w pary zgodnie
+z kolejnoæciˆ uszeregowania w populacji rodzicielskiej (metody selekcji zapewniajˆ, ıe kolejnoæ ta jest randomowa). Efektem krzyıowania
+jest powstanie populacji nowych osobnik—w (populacji potomk—w) o takiej samej liczebnoæci jak populacja rodzicielska. Populacja potomk—w
+stanowi nowˆ generacj« osobnik—w.
+
+Krzyıowanie zachodzi z okreælonym prawdopodobieÄstwem (crossoverProbability). PrawdopodobieÄstwo jest wybierane arbitralnie i mieæci si«
+w przedziale od 50 do 100%. W programie mechanizm krzyıowania z okreælonym prawdopodobieÄstwem opiera si« na losowaniu liczby z zakresu
+0-99 przed przystˆpieniem do krzyıowania okreælonej pary. Jeıeli wylosowana liczba jest mniejsza od % prawdopodobieÄstwa, przeprowadza
+si« krzyıowanie. W przeciwnym razie, krzyıowanie nie zachodzi i osobniki z pary pozostajˆ niezmienione.
+
+W programie istniejˆ cztery metody krzyıowania (crossoverMethod):
+- krzyıowanie jednopunktowe (onePointCrossover):
+	- rozci«cie genom—w dw—ch osobnik—w i stworzenie nowych przez sklejenie lewej cz«æci genomu pierwszego rodzica z prawˆ cz«æciˆ genomu
+		drugiego oraz lewej cz«æci genomu drugiego rodzica z prawˆ cz«æciˆ genomu pierwszego
+	- realizacja praktyczna: dla kaıdej pary losuje si« punkt krzyıowania 'locus' z zakresu <1 ; L-1>, gdzie L jest liczbˆ gen—w
+		w genomie, a locus okreæla indeks genu w sekwencji (liczony od 0!); pomi«dzy genomami osobnik—w wymienia si« geny na pozycjach
+		wi«kszych r—wnych 'locus' (oznacza to, ıe podczas krzyıowania zawsze zamianie ulega co najmniej jeden gen, a w sytuacji
+		ekstremalnej zamianie mogˆ ulec wszystkie geny opr—cz pierwszego)
+- krzyıowanie dwupunktowe (twoPointCrossover):
+	- wyci«cie z wn«trza genom—w dw—ch osobnik—w okreælonej sekwencji gen—w i umieszczenie tej pochodzˆcej z genomu pierwszego rodzica
+		w genomie drugiego oraz na odwr—t
+	- realizacja praktyczna: dla kaıdej pary losuje si« dwa punkty krzyıowania 'locusFront' z zakresu <1 ; L-1> oraz 'locusBack' z zakresu
+		<'locusFront', L-1>, gdzie L jest liczbˆ gen—w w genomie, a locus okreæla indeks genu w sekwencji (liczony od 0!); pomi«dzy
+		genomami wymienia si« geny na pozycjach wi«kszych r—wnych 'locusFront' i mniejszych r—wnych 'locusBack' (oznacza to, ıe podczas
+		krzyıowania zawsze zmianie ulega co najmniej jeden gen, a w sytuacji ekstremalnej zamianie mogˆ ulec wszystkie geny opr—cz
+		pierwszego)
+- krzyıowanie r—wnomierne (uniformCrossover):
+	- utworzenie w spos—b losowy wzorca okreælajˆcego, na kt—rych pozycjach geny majˆ zosta wymienione oraz zamiana gen—w pomi«dzy
+		genomami dw—ch rodzic—w
+	- realizacja praktyczna: przed krzyıowaniem w spos—b losowy tworzy si« binarny wzorzec o d¸ugoæci odpowiadajˆcej d¸ugoæci genomu
+		kaıdego z rodzic—w; jedynka ('true') na wzorcu oznacza pozycj« wymiany gen—w, natomiast zero ('false') oznacza brak wymiany;
+		dokonuje si« zamiany gen—w na wyznaczonym pozycjach
+- krzyıowanie z uærednianiem (averaging):
+	- odci«cie koÄc—wek genom—w dw—ch osobnik—w i zastˆpienie ich sekwencjˆ gen—w o uærednionej wartoæci gen—w obu koÄc—wek
+		(metoda dotyczy jedynie genom—w kodowanych liczbami ca¸kowitymi (codingMethod: integers))
+	- realizacja praktyczna: dla kaıdej pary losuje si« punkt krzyıowania 'locus' z zakresu <1 ; L-1>, gdzie L jest liczbˆ gen—w
+		w genomie, a locus okreæla indeks genu w sekwencji (liczony od 0!); geny obu osobnik—w na pozycjach wi«kszych r—wnych 'locus'
+		sˆ uæredniane i umieszczane w genomach obu osobnik—w
+
+Za przeprowadzenie krzyıowania odpowiada wewn«trzna metoda 'crossover' klasy 'GeneticAlgorythmToolbox'. Metoda ta do utworzenia nowej
+generacji osobnik—w wykorzystuje informacje na temat metody krzyıowania (crossoverMethod), prawdopodobieÄstwa krzyıowania
+(crossoverProbability) oraz metody kodowania (codingMethod).
+
+ad. 5 MUTACJA
+Mutacja (mutation) polega na zmianie pojedynczych gen—w w genomie osobnik—w populacji potomk—w. Jej efektem jest powstanie powstanie
+nowych osobnik—w w miejsce osobnik—w, kt—re uleg¸y mutacji.
+
+Mutacja zachodzi z okreælonym prawdopodobieÄstwem (mutationProbability). PrawdopodobieÄstwo jest wybierane arbitralnie i mieæci si«
+w przedziale od 0 do 10%. W programie mechanizm mutacji z okreælonym prawdopodobieÄstwem opiera si« na losowaniu liczby z zakresu 0-99
+i okreælaniu, czy wylosowana liczba jest mniejsza od % prawdopodobieÄstwa, czy wi«ksza. W zaleınoæci od metody mutacji, losowanie dotyczy
+moıliwoæci wykonania r—ınych operacji i przeprowadza si« je jednorazowo lub wielokrotnie.
+
+W programie istniejˆ cztery metody mutacji (mutationMethod):
+- brak mutacji (none):
+	- wyeliminowanie procesu mutacji z procesu tworzenia nowej generacji
+- negacja gen—w (geneNegation):
+	- polega na losowej negacji poszczeg—lnych gen—w
+		(metoda dotyczy jedynie genom—w kodowanych ciˆgami binarnymi (codingMethod: binary8/binary10))
+	- realizacja praktyczna: dla kaıdego genu przeprowadza si« losowanie liczby z zakresu 0-99; jeıeli wylosowana liczba jest mniejsza
+		od % prawdopodobieÄstwa mutacji, gen jest zamieniany na przeciwny
+- zamiana gen—w (geneSwap):
+	- polega na losowaniu dw—ch gen—w i zamianie ich miejscami
+	- realizacja praktyczna: przed mutacjˆ genomu osobnika przeprowadza si« losowanie liczby z zakresu 0-99; jeıeli wylosowana liczba
+		jest mniejsza od % prawdopodobieÄstwa mutacji, losowane sˆ dwie r—ıne pozycje gen—w w genomie (liczone od 0!), po czym znajdujˆce
+		si« na nich geny sˆ zamieniane miejscami
+- permutacja (permutation):
+	- polega na losowym wyborze jednego lub kilku gen—w i przeprowadzeniu ich permutacji
+	- realizacja praktyczna: dla kaıdego genu przeprowadza si« losowanie liczby z zakresu 0-99; jeıeli wylosowana liczba jest mniejsza
+		od % prawdopodobieÄstwa mutacji, gen ten jest dodawany do kolekcji gen—w poddawanych permutacji; po wykonaniu losowania, dla
+		wszystkich gen—w w genomie, geny z kolekcji poddawane sˆ permutacji przy uıyciu specjalniej funkcji pomocniczej 'permutate'
+		i ponownie umieszczane w genomie w zmienionej kolejnoæci (na pozycjach, z kt—rych zosta¸y pobrane)
+
+Za przeprowadzenie mutacji odpowiada wewn«trzna metoda 'mutate' klasy 'GeneticAlgorythmToolbox'. Metoda ta do wykorzystuje informacje
+na temat metody mutacji (mutationMethod), prawdopodobieÄstwa mutacji (mutationProbability) oraz metody kodowania (codingMethod).
+
+ad. 7. ZAP¢TLENIE
+Polega na powrocie do punktu 2 i ponownym rozpoczˆceiu procesu tworzenia nowej generacji.
+
+Procesy od 2 do 6 tworzˆce rdzeÄ algorytmu genetycznego sˆ zintegrowane w publicznej metodzie 'evlove' klasy 'GeneticAlgorythmToolbox'.
+Metoda ta pobiera jako parametr instancj« klasy 'Population', przekazuje jˆ wewn«trznym metodom i poddaje edycji, tworzˆc nowˆ generacj«.
+Pozosta¸e informacje, niezb«dne do przeprowadzenia ewolucji, klasa 'GeneticAlgorythmToolbox' pobiera z wewn«trznego pola 'internalConfig',
+kt—re przechowuje instancj« klasy 'Parameters' przekazanˆ do klasy 'GeneticAlgorythmToolbox' w argumencie konstruktora.
+
+
+WIZUALIZACJA FUNKCJONOWANIA ALGORYTMU GENETYCZNEGO
+Za przchowywanie wszystkich niezb«dnych informacji do wykonania wykresu funkcji oraz wizualizacji poszukiwaÄ odpowiada klasa 'Chart'.
+Klasa ta przyjmuje jako parametry konstruktora instancje klas 'Parameters' oraz 'Population' i przechowuje ich kopie w polach wewn«trznych.
+Przy tworzeniu instancji klasy 'Chart', konstruktor wykorzystuje informacje z parametr—w oraz wewn«trzne metody, by wype¸ni wewn«trzne
+pola odpowiednimi danymi, kt—re nast«pnie mogˆ by pobierane za pomocˆ mechanizmu w¸asnoæci (properties).
+
+Wewn«trzne metody klasy 'Chart':
+	- 'basicChartPropertiesSetup':
+		- wyznacza argument wierzcho¸ka paraboli (parabolaPeakArgument), argument poczˆtku dziedziny (rangeStartArgument), argument koÄca
+			dziedziny (rangeEndArgument), najwyıszˆ wartoæ funkcji dla argument—w naleıˆcych do dziedziny (highestChartValue), najniıszˆ
+			wartoæ funkcji dla argument—w naleıˆcych do dziedziny (lowestChartValue) oraz argument poszukiwany (targetArgument) i jego
+			wartoæ funkcji (targetValue)
+		- do wyznaczenia tych wielkoæci metoda wykorzystuje informacje na temat wsp—¸czynnik—w funkcji kwadratowej (a/b/cFactor) oraz
+			obiektu poszukiwaÄ (target); korzysta r—wnieı z pomocniczej metody wewn«trznej 'computeParabolaValue' do obliczania wartoæci
+			funkcji dla danego argumentu
+		- dodatkowe informacje:
+				- argument poczˆtku dziedziny jest pierwszˆ liczbˆ ca¸kowitˆ w kierunku minus nieskoÄczonoæci od liczby powsta¸ej po
+					odj«sciu 32 od argumentu wierzcho¸ka parabola
+				- argument koÄca dziedziny jest wyznaczany poprzez dodanie 64 do argumentu poczˆtku dziedziny
+	- 'drawParabola':
+		- wype¸nia wewn«trznˆ tablic« 'parabola' zawierajˆcˆ instancje klasy pomocniczej 'Coordinates' przechowujˆce wsp—¸rz«dne punkt—w
+			tworzˆcych wykres paraboli
+		- do wype¸nienia tablicy metoda wykorzystuje dane z wewn«trznego pola 'rangeStartArgument' oraz pomocniczej metody wewn«trznej
+			'computeParabolaValue'
+		- dodatkowa informacja:
+				- odleg¸oæ mi«dzy kolejnymi argumentami punkt—w wykresu wynosi 0.05
+	- 'drawPoints':
+		- wype¸nia wewn«trznˆ tablic« 'points' zawierajˆcˆ instancje klasy pomocniczej 'Coordinates' przechowujˆce wsp—¸rz«dne punkt—w
+			reprezentujˆcych osobniki populacji
+		- do wype¸nienia tablicy metoda wykorzystuje dane z wewn«trznej kopi klasy 'Population' do wyznaczania wartoæci zakodowanej
+			w genomie; wykorzystuje r—wnieı informacje na temat metody kodowania (codingMethod) zawarte w wewn«trznej kopi klasy
+			'Parameters', dane z wewn«trznego pola 'rangeStartArgument' oraz korzysta z pomocniczej metody wewn«trznej
+			'computeParabolaValue'
+		- dodatkowe informacje:
+			- w zaleınoæci od metody kodowania (codingMethod) wyznaczana jest r—ına minimalna odleg¸oæ mi«dzy kolejnymi argumentami
+				punkt—w (elementaryInterval): dla 'binary8' => 64 / 256, dla 'binary10' => 64 / 1024, 'dla integers' => 64 / 10000
+				(gdzie 64 to szerokoæ dziedziny, a dzielniki to iloæ wartoæci moıliwych do zakodowania)
+			- wyznaczanie argument—w punkt—w opiera si« na powi«kszaniu argumentu poczˆtku dziedziny (rangeStartAgument) o okreælonˆ liczb«
+				elementarnych interwa¸—w (elementaryInterval); liczb« tˆ stanowi wartoæ zakodowana w genomie osobnika (encodedNumber)	
+	- 'computeAveragePointsValue':
+		- oblicza æredniˆ wartoæ punkt—w reprezentujˆcych osobniki populacji (averagePointsValue)
+		- do obliczeÄ metoda wykorzystuje dane zawarte w wewn«trznej tablicy 'points' oraz informacje na temat rozmiaru populacji
+			(populationSize) pobrane z wewn«trznej kopii instancji klasy 'Population'
+	- 'findBestIndividual':
+		- znajduje argument osobnika (bestIndividual), kt—ry znajduje si« najbliıej argumentu poszukiwanego (targetArgument)
+		- do poszukiwaÄ metoda wykorzystuje dane zawarte w wewn«trznej tablicy 'points' oraz informacje na temat rozmiaru populacji
+			(populationSize) pobrane z wewn«trznej kopii instancji klasy 'Population'
+		- dodatkowe informacje:
+			- bliskoæ pomi«dzy argumentem osobnika a argumentem poszukiwanym okreæla si« na podstawie wartoæcci bezwzgl«dnej r—ınicy
+				mi«dzy nimi
+	- 'computeRealization':
+		- wyznacza procent realizacji zadania (realizationPercentage), kt—ry informuje o tym w jakim stopniu poszukiwania sˆ zakoÄczone
+		- do poszukiwaÄ metoda wykorzystuje informacje na temat metody kodowania (codingMethod) zawarte w wewn«trznej kopii instancji klasy
+			'Population' oraz wewn«trznych p—l 'rangeStartArgument', 'parabolaPeakArgument', 'targetArgument' oraz 'bestIndividual'
+		- dodatkowe informacje:
+			- w zaleınoæci od metody kodowania (codingMethod) wyznaczana jest r—ına minimalna odleg¸oæ mi«dzy kolejnymi argumentami
+				punkt—w (elementaryInterval): dla 'binary8' => 64 / 256, dla 'binary10' => 64 / 1024, 'dla integers' => 64 / 10000
+				(gdzie 64 to szerokoæ dziedziny, a dzielniki to iloæ wartoæci moıliwych do zakodowania)
+			- wyznacza si« mierzone w iloæci elementarnych interwa¸—w (elementaryInterval) maksymalne moıliwe odchylenie (maximumDeviation)
+				punktu reprezentujˆcego osobnika od argumentu poszukiwanego (targetArgument)
+			- wyznacza si« mierzone w iloæci elementarnych interwa¸—w (elementaryInterval) odchylenie argumentu (deviation) najlepszego
+				osobnika (bestIndividual) od argumentu poszukiwanego (targetArgument)
+			- procent realizacji zadania (realizationPercentage) obliczany jest ze wzoru:
+				(maximumDeviation - deviation) / maximumDeviation) * 100
+
+
+INTERFACE GRAFICZNY
+Interface graficzny obejmuje dwa okna programu: okno g¸—wne (InterfaceForm.h) oraz okno konfiguracji (ConfigurationForm.h).
+Ponadto podczsa uruchamiania programu pojawia si« okno powitalne (SplashForm.h).
+
+
+GüîWNE OKNO PROGRAMU
+
+Elementy formularza InterfaceForm.h:
+	- delegat ToSettingEventHandler: wykorzystywany do obs¸ugi eventu 'ToSettings'
+	- klasa InterfaceForm:
+		- konstruktor:
+			- inicjalizuje kontrolki metodˆ wewn«trznˆ 'InitializeComponent;
+			- tworzy instancje klas 'Parameters', 'Population', 'Chart' oraz 'GeneticAlgorythmToolbox'
+				oraz przypisuje je do wewn«trznych p—l 'Config', 'Individuals', 'Visualization' oraz 'Toolbox'
+			- inicjalizuje 'ToSettingsEventManager'
+		- metoda 'InterfaceForm_Load':
+			- tworzy wˆtek 'splashThread', uruchamia okno powitalne 'SplashForm' oraz wstrzymuje wˆtek na 3 sekundy
+			- konfiguruje g¸—wne okno programu:
+				- uruchamia funkcje 'chartAreaSetUp', 'drawParabola' oraz 'drawPoints'
+				- inicjalizuje zmienne 'generationQuantity', 'generationIndex', 'realizationAtBeginning' oraz 'history'
+				- uruchamia funkcj« 'informationSetUp'
+			- zamyka wˆtek 'splash Thread' i aktywuje g¸—wne okno programu
+		- destruktor
+		- pola prywatne:
+			- 'Config': wewn«trzna instancja klasy 'Parameters'
+			- 'Individuals': wewn«trzna instancja klasy 'Population'
+			- 'Visualization': wewn«trzna instancja klasy 'Chart'
+			- 'Toolbox': wewn«trzna instancja klasy 'GeneticAlgorythmToolbox'
+			- 'generationQuantity': iloæ wygenerowanych generacji w trakcie pracy programu
+			- 'generationIndex': pozycja aktualnie obserwowanej generacji w tablicy 'history'
+			- 'realizationAtBeginning': poczˆtkowy procent realizacji poszukiwaÄ
+			- 'history': tablica przechowujˆca handle do instancji klasy 'Chart'
+		- eventy:
+			- 'ToSettings': zdarzenie wykorzystywane przy przejæciu do okna konfiguracji wywo¸ywany przez metod« wewn«trznˆ
+				'button_configuration_Click'
+				- 'ToSettingsEventManager': przechowuje adresy do delegat—w obs¸ugujˆcych event 'ToSettings'
+		- metody prywatne:
+			- 'ApplyConfiguration': delegat zdarzenia 'FromSettings' z formularza 'ConfigurationForm.h':
+				- przyjmuje jako parametr instancj« klasy 'Parameters' przekazywanˆ do metody z formularza 'ConfigurationForm.h',
+					kt—rˆ przypisuje do wewn«trznego pola 'Config'
+				- tworzy instancje klas 'Population', 'Chart' oraz 'GeneticAlgorythmToolbox' oraz przypisuje je do wewn«trznych p—l
+					'Individuals', 'Visualization' oraz 'Toolbox'
+				- czyæci wykresy osi X, osi Y, paraboli oraz punkt—w reprezentujˆcych osobniki populacji
+				- uruchamia funkcje 'chartAreaSetUp', 'drawParabola' oraz 'drawPoints'
+				- uaktywnia przycisk 'newGenetaion' (moıe by nieaktywny po osiˆgni«ciu 999 generacji)
+				- unieaktywnia przyciski 'previous' oraz 'next' w panelu kontroli
+				- inicjalizuje zmienne 'generationQuantity', 'generationIndex', 'realizationAtBeginning' oraz 'history'
+				- uruchamia funkcj« 'informationSetUp'
+				- inicjalizuje 'ToSettingsEventManager'
+			- 'EnableWindow': delegat zdarzenia 'WindowClosed' z formularza 'ConfigurationForm.h'
+				- uaktywnia okno formularza 'InterfaceForm'
+			- 'InitializeComponent': metoda inicjalizujˆca elementy GUI
+			- 'chartAreaSetUp': konfiguruje 'chart_visualization' oraz rysuje wykresy osi X i Y:
+					- zakres osi X: <rangeStartArgument ; rangeEnedArgument>
+					- zakres osi Y: <Round(lowestChartValue/100)*100 - 50 ; Round(highestChartValue/100)*100 + 50>
+					- interwa¸ osi X: 2
+					- interwa¸ osi Y: 10
+			- 'drawParabola': pobiera wsp—¸rz«dne punkt—w paraboli z danych zawartych w 'Visualization' i dodaje je do serii
+				'Series_parabola' wykresu 'chart_visualization'
+			- 'drawPoints': pobiera wsp—¸rz«dne punkt—w reprezentujˆcych osobnik—w z danych zawartych w 'Visualization' i dodaje je
+				do serii 'Series_points' wykresu 'chart_visualization'
+			- 'informationSetUp':
+				- wykorzystuje informacje z 'Visualization' oraz 'Config' by prawid¸owo wype¸ni kontrolki typu 'label' w panelu
+					kontroli i informacji
+				- wykorzystuje informacje z 'Visualization' oraz pola wewn«trznego 'realizationAtBeginning' do odpowiedniego
+					wype¸nienia paska post«pu 'progressBar_realization'; wz—r na % wype¸nienia:
+					100 * (Visualization->RealizationPercentage - realizationAtBeginning) / (100 - realizationAtBeginning);
+		- metody obs¸ugi przycisk—w:
+			- 'button_configuration_Click':
+				- tworzy instancj« klasy 'ConfigurationForm'
+				- ustawia metod« publicznˆ 'SetUp' klasy 'ConfigurationForm' delegatem wewn«trznego zdarzenia 'ToSettings'
+				- ustawia metod« prywatnˆ 'ApplyConfiguration' delegatem zdarzenia 'FromSettings' klasy 'ConfigurationForm'
+				- ustawia metod« prywatnˆ 'WindowClosed' delegatem zdarzenia 'WindowClosed' klasy 'ConfigurationForm'
+				- wywo¸uje zdarzenie 'ToSettings' przekazujˆc parametr 'Config'
+				- pokazuje okno 'ConfigurationForm'
+				- deaktywuje okno g¸—wne
+			- 'button_newGeneration_Click':
+				- aktywuje przycisk 'button_previous' oraz dezaktywuje przycisk 'button_next'
+				- przeprowadza ewolucj« populacji 'Individuals' umieszczajˆc jˆ w argumencie metody 'evolve' objektu ÕToolboxÕ
+				- tworzy nowˆ instancj« klasy 'Chart' i przypisuje jˆ do pola wewn«trznego 'Visualization'
+				- czyæci seri« 'Series_points' wykresu 'chart_visualization'
+				- wywo¸uje metody 'drawPoints' oraz 'informationSetUp'
+				- zwi«ksza 'generationQuantity' o 1 oraz ustawia 'generationIndex', tak by wskazywa¸ ostatniˆ generacj«
+				- zapisuje 'Visualization' na pozycji 'generationIndex' w tablicy 'history'
+				- dezaktywuje przycisk 'button_newGeneration' jeıeli liczba generacji osiˆgn«¸a 999
+			- 'button_previous_Click': obs¸uguje powr—t do poprzedniej generacji
+				- aktywuje przycisk 'button_next' jeıeli w momencie wciæni«cia wyæwietlana by¸a ostatnia generacja
+				- pomniejsza 'generationIndex' o 1
+				- przypisuje do 'Visualization' instancj« Chart zapisanˆ na pozycji 'generationIndex'
+				- czyæci seri« 'Series_points' wykresu 'chart_visualization'
+				- wywo¸uje metody 'drawPoints' oraz 'informationSetUp'
+				- dezaktywuje przycisk 'button_previous', jeıeli aktualnie wyæwietlana jest pierwsza generacja
+			- 'button_next_Click': obs¸uguje przejæcie do nast«pnej generacji
+				- aktywuje przycisk 'button_previous' jeıeli w momencie wciæni«cia wyæwietlana by¸a pierwsza generacja
+				- powi«ksza 'generationIndex' o 1
+				- przypisuje do 'Visualization' instancj« Chart zapisanˆ na pozycji 'generationIndex'
+				- czyæci seri« 'Series_points' wykresu 'chart_visualization'
+				- wywo¸uje metody 'drawPoints' oraz 'informationSetUp'
+				- dezaktywuje przycisk 'button_next' jezeli aktualnie wyæwietlana jest ostatnia generacja
+			- 'button_restart_Click': powoduje ponowne rozpocz«cie poszukiwaÄ
+				- uaktywnia 'button_newGeneration', kt—ry moıe by nieaktywny, w wyniku osiˆgni«cia granicznej iloæci 999 generacji
+				- tworzy instancje klas 'Population' oraz 'Chart' i przypisuje je do wewn«trznych p—l 'Individuals' oraz 'Visualization'
+				- inicjalizuje zmienne 'generationQuantity', 'generationIndex', 'realizationAtBeginning' oraz 'history'
+				- dezaktywuje przyciski 'button_previous' oraz 'button_next'
+				- czyæci seri« 'Series_points' wykresu 'chart_visualization'
+				- wywo¸uje metody 'drawPoints' oraz 'informationSetUp'
+			- 'button_quit_Click': zamyka aplikacj«
+
+Sk¸adowe g¸—wnego okna programu:
+	1. wykresu (chart_visualization): przedstawia wykres paraboli oraz wizualizuje po¸oıenie osobnik—w populacji
+	2. paska post«pu (progress bar): pokazuje post«p poszukiwaÄ w stosunku do sytuacji poczˆtkowej
+	3. panelu kontroli i informacji:
+		- przycisk konfiguracji (button_configuration): otwiera okno konfiguracji (ConfigurationForm)
+		- przycisk nowej generacji (button_newGeneration): tworzy nowˆ generacj« i wyæwietla jˆ
+		- przycisk przejæcia do ty¸u (button_previous): powraca do poprzedniej generacji
+		- przycisk przejæcia do przodu (button_next): przechodzi do nast«pnej generacji
+		- przycisk restartu (button_restart): rozpoczyna poszukiwania od nowa przy zachowaniu ustalonej konfiguracji
+		- tablica informacji:
+			- numer generacji (Generation number): numer aktualnie wyæwietlanej generacji
+			- najlepszy osobnik (Best individual): argument osobnika b«dˆcego najbliıej obiektu poszukiwaÄ (targetArgument)
+			- cel (Target): argument obiektu poszukiwaÄ (targetArgument)
+			- ærednia (Average): ærednia wartoæ punkt—w reprezentujˆcych osobniki
+			- maksimum/minimum (Maximum/Minimum): wartoæ maksymalna lub minimalna w zaleınoæci od obiektu poszukiwaÄ (target)
+			- realizacja (Realization): procent realizacji poszukiwaÄ (realizationPercentage)
+		- przycisk wyjæcia (button_quit): zamyka aplikacj«
+
+
+OKNO KONFIGURACJI
+
+Elementy formularza ConfigurationForm.h:
+	- delegat FromSettingEventHandler: wykorzystywany do obs¸ugi eventu 'FromSettings'
+	- delegat WindowClosedEventHandler: wykorzystywany do obs¸ugi eventu 'WindowClosed'
+	- klasa ConfigurationForm:
+		- konstruktor:
+			- inicjalizuje kontrolki metodˆ wewn«trznˆ 'InitializeComponent'
+			- inicjalizuje 'FromSettingsEventManager' oraz 'WindowClosedEventManager'
+		- destruktor
+		- pola wewn«trzne:
+			'previousAFactorWasPositive01': wewn«trzna flaga informujˆca o tym, czy wsp—¸czynnik przy drugiej pot«dze wielomianu (aFactor)
+				mia¸ ostatnio wartoæ 0.1; wykorzystywana w metodzie 'numericUpDown_aFactor_ValueChanged'
+			'previousAFactorWasNegative01': wewn«trzna flaga informujˆca o tym, czy wsp—¸czynnik przy drugiej pot«dze wielomianu (aFactor)
+				mia¸ ostatnio wartoæ -0.1; wykorzystywana w metodzie 'numericUpDown_aFactor_ValueChanged'
+		- eventy:
+			- 'FromSettings': zdarzenie wykorzystywane przy powrocie do okna g¸—wnego wywo¸ywane przez metod« wewn«trznˆ
+				'button_apply_Click'
+				- 'FromSettingsEventManager': przechowuje adresy do delegat—w obs¸ugujˆcych event 'FromSettings'
+			- 'WindowClosed': zdarzenie wywo¸ywane przez metod« wewn«trznˆ 'ConfigurationForm_FormClosed' zwiˆzanˆ ze zdarzeniem
+				zamkni«cia okna konfiguracji
+				- 'WindowClosedEventManager': przechowuje adresy do delegat—w obs¸ugujˆcych event 'FromSettings'
+		- metody publiczne:
+			- 'SetUp': delegat zdarzenia 'ToSettings' z formularz 'InterfaceForm.h'
+				- przyjmuje jako parametr wejæciowy instancj« 'Parameters', z kt—rej informacje wykorzystuje do wype¸nienia
+					kontrolek numericUpDown i comboBox prezentujˆcych konfiguracj« programu
+		- metody obs¸ugi przycisk—w:
+			- 'button_apply_Click':
+				- tworzy instancj« klasy 'Parameters' i wype¸nia jej pola wewn«trzne informacjami z kontrolek numericUpDown i comboBox
+				- wywo¸uje zdarzenie 'FromSettings' z utworzonym obiektem jako argumentem
+				- zamyka okno konfiguracji
+			- 'button_defaultSettings_Click':
+				- wype¸nia kontrolki numericUpDown i comboBox zgodnie z konfiguracjˆ domyælnˆ
+			- 'button_cancel_Click'
+				- zamyka okno konfiguracji
+		- metody obs¸ugi innych zdarzeÄ:
+			- 'ConfigurationForm_FormClosed': metoda wywo¸ywana przy zamkni«ciu okna konfiguracji
+				- wywo¸uje zdarzenie 'WindowClosed'
+			- 'numericUpDown_aFactor_ValueChanged': metoda wywo¸ywana przy zmianie wartoæci wsp—¸czynnika przy drugiej pot«dze
+				wielomianu (aFactor)
+				- ustawia i analizuje stan flag 'previousAFactorWasPositive01' oraz 'previousAFactorWasPositive01' nie dopuszczajˆc
+					do ustawienia wartoæci kontrolki'numericUpDown_aFactor' na 0
+			- 'comboBox_codingMethod_SelectedIndexChanged': metoda wywo¸ywana przy zmianie wyboru metody kodowania (Coding method)
+				- dba o to, by przy zmianie metody kodowania na 'integers' nie by¸o moıliwoæci wyboru metody mutacji (Mutation method)
+					'geneNegation'; jest ona w—wczas usuwana z listy moıliwych metod mutacji, a jeıeli by¸a wczeæniej wybrana, jest
+					zamieniana na metod« 'none'
+				- dbra o to, by przy zmianie metody kodowania na 'binary8' lub 'binary10' nie by¸o moıliwoæci wyboru metody krzyıowania
+					(Crossover method) 'averaging'; jest ona w—wczas usuwana z listy moıliwych metod krzyıowania, a jeıeli by¸a
+					wczeæniej wybrana, jest zamianiana na metod« 'one point crossover'
+			- 'comboBox_mutationMethod_SelectedIndexChanged': metoda wywo¸ywana przy zmianie wyboru metody mutacji (Mutation method)
+				- zmienia prawdopodobieÄstwo mutacji (Mutation probability) na 0 % oraz dezaktywuje kontrolk«
+					'numericUpDown_mutationProbability', jeıeli wybrana metoda mutacji (Mutation method) to 'none'
+			
+Sk¸adowe okna konfiguracji:
+	- 'numericUpDown_aFactor': wyb—r wartoæci wsp—¸czynnika a; zakres <-1;1>; skok 0.1 (z pomini«ciem 0); dok¸adnoæ 0.1
+	- 'numericUpDown_bFactor': wyb—r wartoæci wsp—¸czynnika b; zakres <-10;10>; skok 1; dok¸adnoæ 0.1
+	- 'numericUpDown_cFactor': wyb—r wartoæci wsp—¸czynnika c; zakres <-100;100>; skok 10; dok¸adnoæ 0.1
+	- 'comboBox_populationSize': wyb—r wielkoæci populacji; moıliwoæci: 10, 20, 50, 100, 200
+	- 'comboBox_codingMethod': wyb—r metody kodowania; moıliwoæci: binary8, binary10, integers
+	- 'comboBox_target': wyb—r obiektu poszukiwaÄ; moıliwoæci: minimum, maximum, ekstremum
+	- 'comboBox_fitnessFunctionType': wyb—r typu funkcji przystosowania; moıliwoæci: linear, exponential
+	- 'comboBox_selectionMethod': wyb—r metody selekcji; moıliwoæci: roulette, ranking, tournament
+	- 'comboBox_selectionModificaiton': wyb—r modyfikacji selekcji; moıliwoæci: none, eliteSelection, partialExchange
+	- 'comboBox_crossoverMethod': wyb—r metody krzyıowania; moıliwoæci: onePointCrossover, twoPointCrossover, uniformCrossover, averaging
+	- 'numericUpDown_crossoverProbability': wyb—r prawdopodobieÄstwa krzyıowania; zakres <50;100>; skok 5; dok¸adnoæ 1
+	- 'comboBox_mutationMethod': wyb—r metody mutacji; moıliwoæci: none, geneNegation, geneSwap, permutation
+	- 'numericUpDown_mutationProbability': wyb—r prawdopodobieÄstwa krzyıowania; zakres <0;10>; skok 1; dok¸adnoæ 1
+	- 'button_defaultSettings': wype¸nienie konrolek okna konfiguracji zgodnie z domyælnˆ konfiguracjˆ progamu*
+	- 'button_apply': zamkni«cie okna konfiguracji, przekazanie konfiguracji do okna g¸—wnego i rozpocz«cie nowego poszukiwania
+	- 'button_cancel': zamkni«cie okna konfiguracji bez wprowadzania zmian konfiguracji
+
+*Domyælna konfiguracja programu:
+	- rozmiar populacji (populationSize): 10
+	- metoda kodowania (codingMethod): binary8
+	- obiekt poszukiwaÄ (target): maximum
+	- typ funkcji przystosowania (fitnessFunctionType): linear
+	- metoda selekcji (selecitonMethod): roulette
+	- modyfikacje selekcji (selectionModification): none
+	- metoda krzyıowania (crossoverMethod): onePointCrossover
+	- metoda mutacji (mutationMethod): none
+	- prawdopodobieÄstwo krzyıowania (crossoverProbability): 80
+	- prawdopodobieÄstwo mutacji (mutationProbability): 0
+	- wsp—¸czynnik a (aFactor): -0.1
+	- wsp—¸czynnik b (bFactor): 1
+	- wsp—¸czynnik c (cFactor): 10
+
+
+OKNO POWITALNE
+
+Elementy formularza SplashForm.h:
+	- klasa SplashForm:
+		- konstruktor:
+			- inicjalizuje kontrolki metodˆ wewn«trznˆ 'InitializeComponent'
+		- destruktor
+
+Sk¸adowe okna powitalnego:
+	- 'label_geneticAlgorythmSign': napis powitalny
+	- 'label_authorSign': imi« autora
